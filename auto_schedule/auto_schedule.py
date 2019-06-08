@@ -120,45 +120,25 @@ def auto_schedule(func, args):
     # decisions made above, using primitives 
     # such as split, reorder, parallel, unroll...
     if (func.__name__ == 'batch_gemm'):
-        s,bufs = deal_gemm(ops,bufs)
+        print("scheduling batch_gemm")
+        sA,sB,sC = s.stages
+        xo, yo, xi, yi = sC.tile(sC.op.axis[1],sC.op.axis[2],32,32)
+        k, = sC.op.reduce_axis      
+        ko,ki = sC.split(k,factor = 4)
+        sC.reorder(xo,yo,xi,ko,ki,yi)
+ 
     elif (func.__name__ == 'conv2d_nchw'):
         print("scheduling conv2d_nchw")
-        size = len(bufs)
-        if (size == 4):
-            input = bufs[0]
-            kernel = bufs[1]
-            bias = bufs[2]
-            output = bufs[3]
+        length = len(s.stages)
+        if (length == 6):
+            sinput,spadded,sweight,soutput,sbias,soutputbias = s.stages
         else:
-            input = bufs[0]
-            kernel = bufs[1]
-            output = bufs[2]        
-
-        bn = 64
-        bm = 32
-        fc = 4
-        # padded = bufs[size-1].op.input_tensors[0]
-        # s[padded].compute_inline()
-
-        outputBuffer = s.cache_write(output,'global')
-
-        bs,oc,h,w = s[output].op.axis # [batch_size,out_channel,out_h,out_w]
-        ho,wo,hi,wi = s[output].tile(h,w,bn,bm)
-        
-        s[outputBuffer].compute_at(s[output],wo)
-        
-        bsb,ocb,hb,wb = s[outputBuffer].op.axis                
-        rc,rw,rh = s[outputBuffer].op.reduce_axis
-        rco, rci = s[outputBuffer].split(rc,factor=fc)
-        s[outputBuffer].reorder(rco,hb,rci,rh,rw,wb)
-
-        s[outputBuffer].unroll(rh)
-        s[outputBuffer].unroll(rw)
-        s[outputBuffer].vectorize(wb)
-        
-        bsoc = s[output].fuse(bs,oc)
-        s[output].parallel(bsoc)
-
+            sinput,spadded,sweight,soutput = s.stages
+  
+        b,o,h,w = soutput.op.axis # [batch_size,out_channel,out_h,out_w]
+        rc,rw,rh = soutput.op.reduce_axis
+        soutput.reorder(b,o,rc,h,rh,w,rw)
+               
     print(tvm.lower(s,bufs,simple_mode=True))
     #################################################
     # finally, remember to return these two results
