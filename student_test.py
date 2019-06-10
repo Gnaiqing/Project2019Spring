@@ -362,7 +362,7 @@ def build_and_run(s, tensors, control_f, shape, time_count, count=10, device_id=
     return 0
 
 
-def _auto_schedule(auto_schedule_func, func, shape, queue, timeout=20 * 60):
+def _auto_schedule(auto_schedule_func, func, shape, queue, timeout=24 * 60 * 60):
     '''Interface of auto_schedule
 
         Args:
@@ -399,7 +399,7 @@ def _auto_schedule(auto_schedule_func, func, shape, queue, timeout=20 * 60):
     return s, bufs
 
 
-def _evaluate(torch_func, func, shape, time_count, target="llvm", dev_id=0, times=10, timeout_create=20 * 60, timeout_cal=10.0):
+def _evaluate(torch_func, func, shape, time_count, target="llvm", dev_id=0, times=10, timeout_create=24 * 60 * 60, timeout_cal=10.0):
     '''evaluating auto_schedule in special shape
 
         Args:
@@ -454,7 +454,7 @@ def _evaluate(torch_func, func, shape, time_count, target="llvm", dev_id=0, time
     return 0
 
 
-def evaluate(torch_func, func, shape, target="llvm", dev_id=0, timeout_create=20 * 60, timeout_cal=10.0, times=10):
+def evaluate(torch_func, func, shape, target="llvm", dev_id=0, timeout_create=24 * 60 * 60, timeout_cal=10.0, times=10):
     '''evaluating auto_schedule with a single shape
 
         Args:
@@ -576,7 +576,7 @@ def parallel_evaluate(parallel=1):
     # dir preparation
     res_file = 'project2_score.txt'
     res_path = res_file
-    time_create = 20 * 60
+    time_create = 24 * 60 * 60
     time_cal = 10.0
     number_test = 10
 

@@ -1,7 +1,8 @@
-import tvm
+import tvm,random,math,time
 from tvm import autotvm
 import numpy as np
-# using cfg to create schedule for gemm        
+
+    
 def schedule_gemm(ops,bufs,cfg):
     s = tvm.create_schedule(ops)
     block_cfg = cfg["block"]
@@ -28,7 +29,7 @@ def schedule_gemm(ops,bufs,cfg):
 
     return s,bufs
         
-def deal_gemm(ops, bufs):
+def deal_gemm_tileSize(ops, bufs):
     print("For gemm")
     bs, ns, ks = bufs[0].shape # A
     bs, ks, ms = bufs[1].shape # B
@@ -90,7 +91,192 @@ def deal_gemm(ops, bufs):
     print("best time = ",best_tile_time)
     print("best size = ",best_tile_size)
     return ans_s, ans_bufs
+
+def new_solve(axisList):
+    new_list = axisList[:]
+    size = len(axisList)
+    while True:
+        x1 = random.randint(0,size-1)
+        x2 = random.randint(0,size-1)
+        if x1 != x2:
+            break
+    new_list[x1] = axisList[x2]
+    new_list[x2] = axisList[x1]
+    return new_list
+
+def get_time(s,bufs,input_tvm,ctx,number=5):
+    func = tvm.build(s,bufs)
+    evaluator = func.time_evaluator(func.entry_name,ctx,number=number)
+    tvm_time = 0
+    try:
+        tvm_time = evaluator(*input_tvm).mean * 1e3
+    except Exception as e:
+        print(e)
+    return int(tvm_time)
+
+def judge(dE,t):
+    if (dE < 0):
+        return True
+    else:
+        d = math.exp(-(dE/t))
+        if (d > random.random()):
+            return True
+        else:
+            return False
+
+            
+# using SA algorithm to schedule gemm reorder        
+def schedule_gemm_reorder(s,bufs):
+    # create environment for test
+    l = len(bufs) 
+    tensors = []
+    for i in range(l-1):
+        tensors.append(bufs[i])
+
+    output_tensor = bufs[l-1]
+    ctx = tvm.cpu(0)
+    input_tvm = []
+
+    for tensor in tensors:
+        data = np.random.random(
+            [int(j) for j in tensor.shape]).astype(np.float32) * 100
+        tvm_data = tvm.nd.array(data, ctx)
+        input_tvm.append(tvm_data)
+
+    output_holder = tvm.nd.array(
+        np.zeros([int(j) for j in output_tensor.shape],
+                 dtype=output_tensor.dtype), ctx
+    )
+
+    input_tvm = input_tvm + [output_holder]
+
+    # split axis with large size
+    sA,sB,sC = s.stages
+    b,x,y = sC.op.axis
+    k, = sC.op.reduce_axis
+    xo,yo,xi,yi = sC.tile(x,y,16,16)
+    ko,ki = sC.split(k,factor = 4)
+    sC.reorder(b,xo,yo,xi,yi,ko,ki)
+    old_list = [b,xo,yo,xi,yi,ko,ki]
+    start = time.time()
+    # using SA algorithm to find best order
+    tmp = 1000
+    tmp_min = 0.001
+    alpha = 0.98
+    counter = 0
+    counter2 = 0
+    old_time = get_time(s,bufs,input_tvm,ctx)
+ 
+    while(tmp > tmp_min):
+        new_list = new_solve(old_list)
+        sC.reorder(*new_list)
+        new_time = get_time(s,bufs,input_tvm,ctx)
+        dE = (new_time - old_time)
+        j = judge(dE,tmp)
+        if j:
+            old_time = new_time
+            old_list = new_list[:]
+        else:
+            sC.reorder(*old_list)
+
+        if (dE < 0):
+            tmp = tmp * alpha
+            counter2 = counter2 + 1
+            if (counter2 % 10 == 0):
+                print(counter2,": time = ",new_time," temp = ",tmp)
+
+        else:
+            counter = counter + 1
         
+        if counter > 10000:
+            print("tried times exceed boundary, breaking")
+            break
+
+    end = time.time()
+    print("Tot times tried:",counter + counter2)
+    print("Time used for SA:",end-start)
+    print("order choosed:",old_list)        
+    return s, bufs
+
+def schedule_conv2d_reorder(s,bufs):
+    # create environment for test
+    l = len(bufs) 
+    tensors = []
+    for i in range(l-1):
+        tensors.append(bufs[i])
+    output_tensor = bufs[l-1]
+    ctx = tvm.cpu(0)
+    input_tvm = []
+
+    for tensor in tensors:
+        data = np.random.random(
+            [int(j) for j in tensor.shape]).astype(np.float32) * 100
+        tvm_data = tvm.nd.array(data, ctx)
+        input_tvm.append(tvm_data)
+
+    output_holder = tvm.nd.array(
+        np.zeros([int(j) for j in output_tensor.shape],
+                 dtype=output_tensor.dtype), ctx
+    )
+
+    input_tvm = input_tvm + [output_holder]
+
+    # split axis with large size
+    print("scheduling conv2d_nchw")
+    length = len(s.stages)
+    if (length == 6):
+        sinput,spadded,sweight,soutput,sbias,soutputbias = s.stages
+    else:
+        sinput,spadded,sweight,soutput = s.stages
+  
+    b,o,h,w = soutput.op.axis
+    rc,rw,rh = soutput.op.reduce_axis
+    bo,bi  = soutput.split(b,factor = 4)
+    ho,wo,hi,wi = soutput.tile(h,w,4,4)
+    oo,oi = soutput.split(o,factor = 16)
+    rco,rci = soutput.split(rc,factor = 16)
+    soutput.reorder(bo,bi,rco,rci,oo,oi,ho,hi,rh,wo,wi,rw)
+    old_list = [bo,bi,rco,rci,oo,oi,ho,hi,rh,wo,wi,rw]
+    start = time.time()
+    # using SA algorithm to find best order
+    tmp = 1000
+    tmp_min = 0.001
+    alpha = 0.98
+    counter = 0
+    counter2 = 0
+    old_time = get_time(s,bufs,input_tvm,ctx)
+ 
+    while(tmp > tmp_min):
+        new_list = new_solve(old_list)
+        soutput.reorder(*new_list)
+        new_time = get_time(s,bufs,input_tvm,ctx)
+        dE = (new_time - old_time)
+        j = judge(dE,tmp)
+        if j:
+            old_time = new_time
+            old_list = new_list[:]
+        else:
+            soutput.reorder(*old_list)
+
+        if (dE < 0):
+            tmp = tmp * alpha
+            counter2 = counter2 + 1
+            if (counter2 % 10 == 0):
+                print(counter2,": time = ",new_time," temp = ",tmp)
+
+        else:
+            counter = counter + 1
+        
+        if counter > 10000:
+            print("tried times exceed boundary, breaking")
+            break
+
+    end = time.time()
+    print("Tot times tried:",counter + counter2)
+    print("Time used for SA:",end-start)
+    print("order choosed:",old_list)        
+    return s, bufs
+
 def auto_schedule(func, args):
     """Automatic scheduler
     
@@ -111,23 +297,26 @@ def auto_schedule(func, args):
     # to analyze which schedule is appropriate
     
     s = tvm.create_schedule(ops)
-    # size = len(bufs)
-    # for tensor in bufs:
-    #     print(tensor.op.input_tensors)
 
     #################################################
     # perform real schedule according to 
     # decisions made above, using primitives 
     # such as split, reorder, parallel, unroll...
     if (func.__name__ == 'batch_gemm'):
-        print("scheduling batch_gemm")
+        print("scheduling gemm")
+        # s,bufs = schedule_gemm_reorder(s,bufs)
         sA,sB,sC = s.stages
-        xo, yo, xi, yi = sC.tile(sC.op.axis[1],sC.op.axis[2],32,32)
-        k, = sC.op.reduce_axis      
+        b,x,y = sC.op.axis
+        k, = sC.op.reduce_axis
+        xo,yo,xi,yi = sC.tile(x,y,16,16)
         ko,ki = sC.split(k,factor = 4)
-        sC.reorder(xo,yo,xi,ko,ki,yi)
+        sC.reorder(xo,b,ko,xi,yo,yi,ki)
+        # sC.reorder(b,xo,yo,ko,xi,ki,yi) # used by tutorial
  
+        
     elif (func.__name__ == 'conv2d_nchw'):
+        s,bufs = schedule_conv2d_reorder(s,bufs)
+        '''
         print("scheduling conv2d_nchw")
         length = len(s.stages)
         if (length == 6):
@@ -135,10 +324,15 @@ def auto_schedule(func, args):
         else:
             sinput,spadded,sweight,soutput = s.stages
   
+        bn = 16
+        bm = 16
+        fc = 4
+
         b,o,h,w = soutput.op.axis # [batch_size,out_channel,out_h,out_w]
+
         rc,rw,rh = soutput.op.reduce_axis
-        soutput.reorder(b,o,rc,h,rh,w,rw)
-               
+        soutput.reorder(b,rc,o,h,rh,w,rw)
+        '''       
     print(tvm.lower(s,bufs,simple_mode=True))
     #################################################
     # finally, remember to return these two results
