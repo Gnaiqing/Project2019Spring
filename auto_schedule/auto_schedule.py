@@ -156,8 +156,9 @@ def schedule_gemm_reorder(s,bufs):
     k, = sC.op.reduce_axis
     xo,yo,xi,yi = sC.tile(x,y,16,16)
     ko,ki = sC.split(k,factor = 4)
-    sC.reorder(b,xo,yo,xi,yi,ko,ki)
-    old_list = [b,xo,yo,xi,yi,ko,ki]
+    bo,bi = sC.split(b,factor = 4)
+    sC.reorder(xo,bo,bi,ko,xi,yo,yi,ki)
+    old_list = [xo,bo,bi,ko,xi,yo,yi,ki]
     start = time.time()
     # using SA algorithm to find best order
     tmp = 1000
@@ -183,7 +184,7 @@ def schedule_gemm_reorder(s,bufs):
             tmp = tmp * alpha
             counter2 = counter2 + 1
             if (counter2 % 10 == 0):
-                print(counter2,": time = ",new_time," temp = ",tmp)
+                print(counter2,": time = ",new_time," temp = ",tmp," counter = ",counter)
 
         else:
             counter = counter + 1
@@ -262,7 +263,7 @@ def schedule_conv2d_reorder(s,bufs):
             tmp = tmp * alpha
             counter2 = counter2 + 1
             if (counter2 % 10 == 0):
-                print(counter2,": time = ",new_time," temp = ",tmp)
+                print(counter2,": time = ",new_time," temp = ",tmp," counter = ",counter)
 
         else:
             counter = counter + 1
@@ -304,7 +305,8 @@ def auto_schedule(func, args):
     # such as split, reorder, parallel, unroll...
     if (func.__name__ == 'batch_gemm'):
         print("scheduling gemm")
-        # s,bufs = schedule_gemm_reorder(s,bufs)
+        s,bufs = schedule_gemm_reorder(s,bufs)
+        '''
         sA,sB,sC = s.stages
         b,x,y = sC.op.axis
         k, = sC.op.reduce_axis
@@ -312,27 +314,18 @@ def auto_schedule(func, args):
         ko,ki = sC.split(k,factor = 4)
         sC.reorder(xo,b,ko,xi,yo,yi,ki)
         # sC.reorder(b,xo,yo,ko,xi,ki,yi) # used by tutorial
- 
+        '''
         
     elif (func.__name__ == 'conv2d_nchw'):
-        s,bufs = schedule_conv2d_reorder(s,bufs)
-        '''
-        print("scheduling conv2d_nchw")
-        length = len(s.stages)
-        if (length == 6):
-            sinput,spadded,sweight,soutput,sbias,soutputbias = s.stages
-        else:
-            sinput,spadded,sweight,soutput = s.stages
-  
-        bn = 16
-        bm = 16
-        fc = 4
-
-        b,o,h,w = soutput.op.axis # [batch_size,out_channel,out_h,out_w]
-
+        # s,bufs = schedule_conv2d_reorder(s,bufs)
+        b,o,h,w = soutput.op.axis
         rc,rw,rh = soutput.op.reduce_axis
-        soutput.reorder(b,rc,o,h,rh,w,rw)
-        '''       
+        bo,bi  = soutput.split(b,factor = 4)
+        ho,wo,hi,wi = soutput.tile(h,w,4,4)
+        oo,oi = soutput.split(o,factor = 16)
+        rco,rci = soutput.split(rc,factor = 16)
+        soutput.reorder(rco,bi,bo,oo,ho,oi,rci,rh,rw,wo,wi,hi)
+
     print(tvm.lower(s,bufs,simple_mode=True))
     #################################################
     # finally, remember to return these two results
