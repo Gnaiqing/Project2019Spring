@@ -1,0 +1,415 @@
+Processing begins...
+scheduling gemm
+produce compute {
+  for (b, 0, 2) {
+    for (i.outer, 0, 32) {
+      for (i.inner.init, 0, 16) {
+        for (j.outer.init, 0, 32) {
+          for (j.inner.init, 0, 16) {
+            compute[((((((((b*32) + i.outer)*16) + i.inner.init)*32) + j.outer.init)*16) + j.inner.init)] = 0.000000f
+          }
+        }
+      }
+      for (rv.outer, 0, 128) {
+        for (i.inner, 0, 16) {
+          for (j.outer, 0, 32) {
+            for (rv.inner, 0, 4) {
+              for (j.inner, 0, 16) {
+                compute[((((((((b*32) + i.outer)*16) + i.inner)*32) + j.outer)*16) + j.inner)] = (compute[((((((((b*32) + i.outer)*16) + i.inner)*32) + j.outer)*16) + j.inner)] + (A[((((((((b*32) + i.outer)*16) + i.inner)*128) + rv.outer)*4) + rv.inner)]*B[((((((((b*128) + rv.outer)*4) + rv.inner)*32) + j.outer)*16) + j.inner)]))
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+scheduling gemm
+produce compute {
+  for (b, 0, 8) {
+    for (i.outer, 0, 64) {
+      for (i.inner.init, 0, 16) {
+        for (j.outer.init, 0, 64) {
+          for (j.inner.init, 0, 16) {
+            compute[((((((((b*64) + i.outer)*16) + i.inner.init)*64) + j.outer.init)*16) + j.inner.init)] = 0.000000f
+          }
+        }
+      }
+      for (rv.outer, 0, 8) {
+        for (i.inner, 0, 16) {
+          for (j.outer, 0, 64) {
+            for (rv.inner, 0, 4) {
+              for (j.inner, 0, 16) {
+                compute[((((((((b*64) + i.outer)*16) + i.inner)*64) + j.outer)*16) + j.inner)] = (compute[((((((((b*64) + i.outer)*16) + i.inner)*64) + j.outer)*16) + j.inner)] + (A[((((((((b*64) + i.outer)*16) + i.inner)*8) + rv.outer)*4) + rv.inner)]*B[((((((((b*8) + rv.outer)*4) + rv.inner)*64) + j.outer)*16) + j.inner)]))
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+scheduling gemm
+produce compute {
+  for (i.outer, 0, 64) {
+    for (i.inner.init, 0, 16) {
+      for (j.outer.init, 0, 64) {
+        for (j.inner.init, 0, 16) {
+          compute[((((((i.outer*16) + i.inner.init)*64) + j.outer.init)*16) + j.inner.init)] = 0.000000f
+        }
+      }
+    }
+    for (rv.outer, 0, 256) {
+      for (i.inner, 0, 16) {
+        for (j.outer, 0, 64) {
+          for (rv.inner, 0, 4) {
+            for (j.inner, 0, 16) {
+              compute[((((((i.outer*16) + i.inner)*64) + j.outer)*16) + j.inner)] = (compute[((((((i.outer*16) + i.inner)*64) + j.outer)*16) + j.inner)] + (A[((((((i.outer*16) + i.inner)*256) + rv.outer)*4) + rv.inner)]*B[((((((rv.outer*4) + rv.inner)*64) + j.outer)*16) + j.inner)]))
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+scheduling conv2d_nchw
+10 : time =  167  temp =  817.0728068875467  counter =  6
+20 : time =  356  temp =  667.6079717550942  counter =  14
+30 : time =  138  temp =  545.4843193824369  counter =  26
+40 : time =  132  temp =  445.7004039509507  counter =  42
+50 : time =  70  temp =  364.1696800871167  counter =  48
+60 : time =  102  temp =  297.5531426921204  counter =  63
+70 : time =  125  temp =  243.12258149766154  counter =  78
+80 : time =  129  temp =  198.64885008204067  counter =  84
+90 : time =  80  temp =  162.3105735215164  counter =  96
+100 : time =  95  temp =  132.61955589475298  counter =  106
+110 : time =  121  temp =  108.3598327831057  counter =  129
+120 : time =  97  temp =  88.53787272595741  counter =  138
+130 : time =  102  temp =  72.34188818405036  counter =  154
+140 : time =  110  temp =  59.108589634087096  counter =  185
+150 : time =  88  temp =  48.296021243487694  counter =  196
+160 : time =  64  temp =  39.46136563891707  counter =  219
+170 : time =  107  temp =  32.24280878620576  counter =  237
+180 : time =  126  temp =  26.344722276883594  counter =  259
+190 : time =  44  temp =  21.525556177446163  counter =  276
+200 : time =  87  temp =  17.587946605721505  counter =  318
+210 : time =  101  temp =  14.37063290052517  counter =  338
+220 : time =  123  temp =  11.741853360782626  counter =  354
+230 : time =  105  temp =  9.593949083556632  counter =  374
+240 : time =  55  temp =  7.838954906837825  counter =  406
+250 : time =  40  temp =  6.404996888794889  counter =  427
+260 : time =  44  temp =  5.233348786033643  counter =  492
+270 : time =  40  temp =  4.2760269820260435  counter =  529
+280 : time =  38  temp =  3.4938253685309055  counter =  582
+290 : time =  39  temp =  2.854709700640464  counter =  630
+300 : time =  41  temp =  2.3325056679514122  counter =  689
+310 : time =  42  temp =  1.905826953194173  counter =  785
+320 : time =  42  temp =  1.557199378088304  counter =  858
+330 : time =  40  temp =  1.2723452667381527  counter =  968
+340 : time =  40  temp =  1.039598718423827  counter =  1081
+350 : time =  40  temp =  0.8494278428992525  counter =  1282
+360 : time =  40  temp =  0.6940443918461263  counter =  1377
+370 : time =  38  temp =  0.5670847993502747  counter =  1595
+380 : time =  36  temp =  0.46334956874839023  counter =  2089
+390 : time =  38  temp =  0.37859033270738146  counter =  2831
+400 : time =  35  temp =  0.3093358658057103  counter =  3773
+410 : time =  35  temp =  0.2527499241448612  counter =  6017
+420 : time =  34  temp =  0.20651508996165627  counter =  13423
+tried times exceed boundary, breaking
+Tot times tried: 25423
+Time used for SA: 12672.507021427155
+order choosed: [iter_var(b.inner, ), iter_var(b.outer, ), iter_var(c.outer, ), iter_var(rh, Range(min=0, extent=1)), iter_var(rc.outer, ), iter_var(h.outer, ), iter_var(h.inner, ), iter_var(rc.inner, ), iter_var(c.inner, ), iter_var(w.outer, ), iter_var(rw, Range(min=0, extent=1)), iter_var(w.inner, )]
+// attr [compute] storage_scope = "global"
+allocate compute[float32 * 2239488]
+// attr [compute] storage_scope = "global"
+allocate compute[float32 * 373248]
+produce compute {
+  for (b, 0, 8) {
+    for (c, 0, 384) {
+      for (h, 0, 27) {
+        for (w, 0, 27) {
+          compute[((((((b*384) + c)*27) + h)*27) + w)] = tvm_if_then_else((uint1)1, inputs[((((((b*384) + c)*27) + h)*27) + w)], 0.000000f)
+        }
+      }
+    }
+  }
+}
+produce compute {
+  for (b.inner, 0, 4) {
+    for (b.outer, 0, 2) {
+      for (c.outer, 0, 4) {
+        for (h.outer.init, 0, 7) {
+          for (h.inner.init, 0, 4) {
+            for (c.inner.init, 0, 16) {
+              for (w.outer.init, 0, 7) {
+                for (w.inner.init, 0, 4) {
+                  if (likely(((h.outer.init*4) < (27 - h.inner.init)))) {
+                    if (likely(((w.outer.init*4) < (27 - w.inner.init)))) {
+                      compute[(((((((((((b.outer*4) + b.inner)*4) + c.outer)*16) + c.inner.init)*729) + (h.outer.init*108)) + (h.inner.init*27)) + (w.outer.init*4)) + w.inner.init)] = 0.000000f
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        for (rc.outer, 0, 24) {
+          for (h.outer, 0, 7) {
+            for (h.inner, 0, 4) {
+              for (rc.inner, 0, 16) {
+                for (c.inner, 0, 16) {
+                  for (w.outer, 0, 7) {
+                    for (w.inner, 0, 4) {
+                      if (likely(((h.outer*4) < (27 - h.inner)))) {
+                        if (likely(((w.outer*4) < (27 - w.inner)))) {
+                          compute[(((((((((((b.outer*4) + b.inner)*4) + c.outer)*16) + c.inner)*729) + (h.outer*108)) + (h.inner*27)) + (w.outer*4)) + w.inner)] = (compute[(((((((((((b.outer*4) + b.inner)*4) + c.outer)*16) + c.inner)*729) + (h.outer*108)) + (h.inner*27)) + (w.outer*4)) + w.inner)] + (compute[(((((((((((b.outer*4) + b.inner)*24) + rc.outer)*16) + rc.inner)*729) + (h.outer*108)) + (h.inner*27)) + (w.outer*4)) + w.inner)]*weight[((((((c.outer*16) + c.inner)*24) + rc.outer)*16) + rc.inner)]))
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+produce compute {
+  for (b, 0, 8) {
+    for (c, 0, 64) {
+      for (h, 0, 27) {
+        for (w, 0, 27) {
+          compute[((((((b*64) + c)*27) + h)*27) + w)] = (compute[((((((b*64) + c)*27) + h)*27) + w)] + bias[c])
+        }
+      }
+    }
+  }
+}
+
+scheduling conv2d_nchw
+10 : time =  66  temp =  817.0728068875467  counter =  12
+20 : time =  61  temp =  667.6079717550942  counter =  20
+30 : time =  252  temp =  545.4843193824369  counter =  36
+40 : time =  101  temp =  445.7004039509507  counter =  43
+50 : time =  38  temp =  364.1696800871167  counter =  57
+60 : time =  30  temp =  297.5531426921204  counter =  64
+70 : time =  32  temp =  243.12258149766154  counter =  75
+80 : time =  35  temp =  198.64885008204067  counter =  81
+90 : time =  23  temp =  162.3105735215164  counter =  94
+100 : time =  41  temp =  132.61955589475298  counter =  100
+110 : time =  27  temp =  108.3598327831057  counter =  118
+120 : time =  178  temp =  88.53787272595741  counter =  134
+130 : time =  70  temp =  72.34188818405036  counter =  148
+140 : time =  54  temp =  59.108589634087096  counter =  171
+150 : time =  81  temp =  48.296021243487694  counter =  181
+160 : time =  80  temp =  39.46136563891707  counter =  190
+170 : time =  30  temp =  32.24280878620576  counter =  218
+180 : time =  12  temp =  26.344722276883594  counter =  224
+190 : time =  24  temp =  21.525556177446163  counter =  263
+200 : time =  23  temp =  17.587946605721505  counter =  295
+210 : time =  23  temp =  14.37063290052517  counter =  322
+220 : time =  30  temp =  11.741853360782626  counter =  353
+230 : time =  28  temp =  9.593949083556632  counter =  389
+240 : time =  21  temp =  7.838954906837825  counter =  416
+250 : time =  12  temp =  6.404996888794889  counter =  440
+260 : time =  14  temp =  5.233348786033643  counter =  483
+270 : time =  16  temp =  4.2760269820260435  counter =  525
+280 : time =  12  temp =  3.4938253685309055  counter =  568
+290 : time =  20  temp =  2.854709700640464  counter =  630
+300 : time =  17  temp =  2.3325056679514122  counter =  680
+310 : time =  13  temp =  1.905826953194173  counter =  766
+320 : time =  11  temp =  1.557199378088304  counter =  808
+330 : time =  12  temp =  1.2723452667381527  counter =  905
+340 : time =  14  temp =  1.039598718423827  counter =  1015
+350 : time =  14  temp =  0.8494278428992525  counter =  1153
+360 : time =  12  temp =  0.6940443918461263  counter =  1337
+370 : time =  12  temp =  0.5670847993502747  counter =  1613
+380 : time =  11  temp =  0.46334956874839023  counter =  2011
+390 : time =  11  temp =  0.37859033270738146  counter =  2534
+400 : time =  11  temp =  0.3093358658057103  counter =  3538
+410 : time =  11  temp =  0.2527499241448612  counter =  6022
+420 : time =  11  temp =  0.20651508996165627  counter =  8831
+430 : time =  10  temp =  0.16873786421960474  counter =  20278
+tried times exceed boundary, breaking
+Tot times tried: 25433
+Time used for SA: 7251.799926519394
+order choosed: [iter_var(b.inner, ), iter_var(h.outer, ), iter_var(c.outer, ), iter_var(rc.outer, ), iter_var(b.outer, ), iter_var(c.inner, ), iter_var(rh, Range(min=0, extent=3)), iter_var(rc.inner, ), iter_var(h.inner, ), iter_var(w.inner, ), iter_var(rw, Range(min=0, extent=3)), iter_var(w.outer, )]
+// attr [compute] storage_scope = "global"
+allocate compute[float32 * 114688]
+produce compute {
+  for (b, 0, 4) {
+    for (c, 0, 112) {
+      for (h, 0, 16) {
+        for (w, 0, 16) {
+          compute[((((((b*112) + c)*16) + h)*16) + w)] = tvm_if_then_else(((((1 <= h) && (h < 15)) && (1 <= w)) && (w < 15)), inputs[(((((((b*112) + c)*14) + h)*14) + w) + -15)], 0.000000f)
+        }
+      }
+    }
+  }
+}
+produce compute {
+  for (b.inner, 0, 4) {
+    for (h.outer, 0, 3) {
+      for (c.outer, 0, 14) {
+        for (c.inner.init, 0, 16) {
+          for (h.inner.init, 0, 4) {
+            for (w.inner.init, 0, 4) {
+              for (w.outer.init, 0, 3) {
+                compute[((((((((((((b.inner*14) + c.outer)*16) + c.inner.init)*3) + h.outer)*4) + h.inner.init)*3) + w.outer.init)*4) + w.inner.init)] = 0.000000f
+              }
+            }
+          }
+        }
+        for (rc.outer, 0, 7) {
+          for (c.inner, 0, 16) {
+            for (rh, 0, 3) {
+              for (rc.inner, 0, 16) {
+                for (h.inner, 0, 4) {
+                  for (w.inner, 0, 4) {
+                    for (rw, 0, 3) {
+                      for (w.outer, 0, 3) {
+                        compute[((((((((((((b.inner*14) + c.outer)*16) + c.inner)*3) + h.outer)*4) + h.inner)*3) + w.outer)*4) + w.inner)] = (compute[((((((((((((b.inner*14) + c.outer)*16) + c.inner)*3) + h.outer)*4) + h.inner)*3) + w.outer)*4) + w.inner)] + (compute[((((((((((((((((b.inner*7) + rc.outer)*16) + rc.inner)*4) + h.outer)*2) + rh)*2) + h.inner)*4) + w.outer)*2) + rw)*2) + w.inner)]*weight[((((((((((c.outer*16) + c.inner)*7) + rc.outer)*16) + rc.inner)*3) + rh)*3) + rw)]))
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+scheduling conv2d_nchw
+10 : time =  378  temp =  817.0728068875467  counter =  17
+20 : time =  605  temp =  667.6079717550942  counter =  31
+30 : time =  566  temp =  545.4843193824369  counter =  43
+40 : time =  660  temp =  445.7004039509507  counter =  56
+50 : time =  366  temp =  364.1696800871167  counter =  66
+60 : time =  493  temp =  297.5531426921204  counter =  79
+70 : time =  584  temp =  243.12258149766154  counter =  99
+80 : time =  420  temp =  198.64885008204067  counter =  116
+90 : time =  461  temp =  162.3105735215164  counter =  131
+100 : time =  597  temp =  132.61955589475298  counter =  141
+110 : time =  293  temp =  108.3598327831057  counter =  160
+120 : time =  359  temp =  88.53787272595741  counter =  185
+130 : time =  227  temp =  72.34188818405036  counter =  196
+140 : time =  362  temp =  59.108589634087096  counter =  229
+150 : time =  437  temp =  48.296021243487694  counter =  248
+160 : time =  237  temp =  39.46136563891707  counter =  266
+170 : time =  220  temp =  32.24280878620576  counter =  300
+180 : time =  247  temp =  26.344722276883594  counter =  325
+190 : time =  222  temp =  21.525556177446163  counter =  366
+200 : time =  248  temp =  17.587946605721505  counter =  438
+210 : time =  218  temp =  14.37063290052517  counter =  501
+220 : time =  198  temp =  11.741853360782626  counter =  584
+230 : time =  207  temp =  9.593949083556632  counter =  656
+240 : time =  199  temp =  7.838954906837825  counter =  718
+250 : time =  187  temp =  6.404996888794889  counter =  898
+260 : time =  182  temp =  5.233348786033643  counter =  1012
+270 : time =  183  temp =  4.2760269820260435  counter =  1335
+280 : time =  175  temp =  3.4938253685309055  counter =  1639
+290 : time =  180  temp =  2.854709700640464  counter =  2041
+300 : time =  181  temp =  2.3325056679514122  counter =  2494
+310 : time =  186  temp =  1.905826953194173  counter =  2867
+320 : time =  181  temp =  1.557199378088304  counter =  3592
+330 : time =  177  temp =  1.2723452667381527  counter =  4653
+340 : time =  176  temp =  1.039598718423827  counter =  5562
+350 : time =  176  temp =  0.8494278428992525  counter =  11042
+360 : time =  175  temp =  0.6940443918461263  counter =  19656
+tried times exceed boundary, breaking
+Tot times tried: 25366
+Time used for SA: 40558.559834480286
+order choosed: [iter_var(c.outer, ), iter_var(c.inner, ), iter_var(b.outer, ), iter_var(rc.outer, ), iter_var(rc.inner, ), iter_var(rh, Range(min=0, extent=3)), iter_var(h.inner, ), iter_var(w.outer, ), iter_var(b.inner, ), iter_var(w.inner, ), iter_var(h.outer, ), iter_var(rw, Range(min=0, extent=3))]
+// attr [compute] storage_scope = "global"
+allocate compute[float32 * 82944]
+produce compute {
+  for (c, 0, 1024) {
+    for (h, 0, 9) {
+      for (w, 0, 9) {
+        compute[((((c*9) + h)*9) + w)] = tvm_if_then_else(((((1 <= h) && (h < 8)) && (1 <= w)) && (w < 8)), inputs[(((((c*7) + h)*7) + w) + -8)], 0.000000f)
+      }
+    }
+  }
+}
+produce compute {
+  for (c.outer, 0, 64) {
+    for (c.inner, 0, 16) {
+      for (h.inner.init, 0, 4) {
+        for (w.outer.init, 0, 2) {
+          for (b.inner.init, 0, 4) {
+            for (w.inner.init, 0, 4) {
+              for (h.outer.init, 0, 2) {
+                if (likely((b.inner.init < 1))) {
+                  if (likely(((h.outer.init*4) < (7 - h.inner.init)))) {
+                    if (likely(((w.outer.init*4) < (7 - w.inner.init)))) {
+                      compute[(((((((((b.inner.init*64) + c.outer)*16) + c.inner)*49) + (h.outer.init*28)) + (h.inner.init*7)) + (w.outer.init*4)) + w.inner.init)] = 0.000000f
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      for (rc.outer, 0, 64) {
+        for (rc.inner, 0, 16) {
+          for (rh, 0, 3) {
+            for (h.inner, 0, 4) {
+              for (w.outer, 0, 2) {
+                for (b.inner, 0, 4) {
+                  for (w.inner, 0, 4) {
+                    for (h.outer, 0, 2) {
+                      for (rw, 0, 3) {
+                        if (likely((b.inner < 1))) {
+                          if (likely(((h.outer*4) < (7 - h.inner)))) {
+                            if (likely(((w.outer*4) < (7 - w.inner)))) {
+                              compute[(((((((((b.inner*64) + c.outer)*16) + c.inner)*49) + (h.outer*28)) + (h.inner*7)) + (w.outer*4)) + w.inner)] = (compute[(((((((((b.inner*64) + c.outer)*16) + c.inner)*49) + (h.outer*28)) + (h.inner*7)) + (w.outer*4)) + w.inner)] + (compute[(((((((((((b.inner*64) + rc.outer)*16) + rc.inner)*81) + (h.outer*36)) + (h.inner*9)) + (rh*9)) + (w.outer*4)) + w.inner) + rw)]*weight[((((((((((c.outer*16) + c.inner)*64) + rc.outer)*16) + rc.inner)*3) + rh)*3) + rw)]))
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+
+#####################################################
+The results:
+
+Time costs of GEMMs
+(2, 512, 512, 512): yours: 28.8280627(ms), torch: 6.419038772583008(ms)
+(8, 1024, 32, 1024): yours: 27.9964665(ms), torch: 9.658551216125488(ms)
+(1, 1024, 1024, 1024): yours: 117.8699299(ms), torch: 28.682589530944824(ms)
+
+Time costs of Conv2ds
+(8, 384, 27, 27, 64, 384, 1, 1, 1, 1, 0, 1, 1): yours: 36.544062000000004(ms), torch: 5.635190010070801(ms)
+(4, 112, 14, 14, 224, 112, 3, 3, 0, 1, 1, 2, 1): yours: 11.8139489(ms), torch: 5.3391218185424805(ms)
+(1, 1024, 7, 7, 1024, 1024, 3, 3, 0, 1, 1, 1, 1): yours: 181.6757296(ms), torch: 18.588638305664062(ms)
+
+your scores:
+gemm_(2, 512, 512, 512):1.4
+gemm_(8, 1024, 32, 1024):2.1
+gemm_(1, 1024, 1024, 1024):1.4
+conv2d_(8, 384, 27, 27, 64, 384, 1, 1, 1, 1, 0, 1, 1):0.7
+conv2d_(4, 112, 14, 14, 224, 112, 3, 3, 0, 1, 1, 2, 1):2.8
+conv2d_(1, 1024, 7, 7, 1024, 1024, 3, 3, 0, 1, 1, 1, 1):0.7
+total:9.1
+exceptions: No exceptions
+
+all done!

@@ -1,0 +1,254 @@
+Processing begins...
+scheduling gemm
+10 : time =  818  temp =  817.0728068875467  counter =  14
+20 : time =  55  temp =  667.6079717550942  counter =  31
+30 : time =  54  temp =  545.4843193824369  counter =  45
+40 : time =  115  temp =  445.7004039509507  counter =  63
+50 : time =  341  temp =  364.1696800871167  counter =  75
+60 : time =  51  temp =  297.5531426921204  counter =  81
+70 : time =  264  temp =  243.12258149766154  counter =  101
+80 : time =  120  temp =  198.64885008204067  counter =  113
+90 : time =  214  temp =  162.3105735215164  counter =  129
+100 : time =  234  temp =  132.61955589475298  counter =  150
+110 : time =  109  temp =  108.3598327831057  counter =  170
+120 : time =  96  temp =  88.53787272595741  counter =  185
+130 : time =  67  temp =  72.34188818405036  counter =  227
+140 : time =  216  temp =  59.108589634087096  counter =  249
+150 : time =  46  temp =  48.296021243487694  counter =  267
+160 : time =  56  temp =  39.46136563891707  counter =  290
+170 : time =  53  temp =  32.24280878620576  counter =  316
+180 : time =  32  temp =  26.344722276883594  counter =  367
+190 : time =  51  temp =  21.525556177446163  counter =  408
+200 : time =  49  temp =  17.587946605721505  counter =  448
+210 : time =  53  temp =  14.37063290052517  counter =  500
+220 : time =  65  temp =  11.741853360782626  counter =  541
+230 : time =  46  temp =  9.593949083556632  counter =  589
+240 : time =  35  temp =  7.838954906837825  counter =  627
+250 : time =  37  temp =  6.404996888794889  counter =  678
+260 : time =  36  temp =  5.233348786033643  counter =  754
+270 : time =  35  temp =  4.2760269820260435  counter =  826
+280 : time =  29  temp =  3.4938253685309055  counter =  978
+290 : time =  35  temp =  2.854709700640464  counter =  1129
+300 : time =  28  temp =  2.3325056679514122  counter =  1168
+310 : time =  28  temp =  1.905826953194173  counter =  1307
+320 : time =  28  temp =  1.557199378088304  counter =  1507
+330 : time =  28  temp =  1.2723452667381527  counter =  1646
+340 : time =  28  temp =  1.039598718423827  counter =  1904
+350 : time =  29  temp =  0.8494278428992525  counter =  2082
+360 : time =  31  temp =  0.6940443918461263  counter =  2490
+370 : time =  28  temp =  0.5670847993502747  counter =  2809
+380 : time =  29  temp =  0.46334956874839023  counter =  3232
+390 : time =  28  temp =  0.37859033270738146  counter =  4374
+400 : time =  28  temp =  0.3093358658057103  counter =  6244
+410 : time =  28  temp =  0.2527499241448612  counter =  9584
+tried times exceed boundary, breaking
+Tot times tried: 10412
+Time used for SA: 18699.589892864227
+order choosed: [iter_var(b.inner, ), iter_var(b.outer, ), iter_var(i.outer, ), iter_var(rv.outer, ), iter_var(i.inner, ), iter_var(j.outer, ), iter_var(rv.inner, ), iter_var(j.inner, )]
+produce compute {
+  for (b.inner, 0, 4) {
+    for (b.outer, 0, 2) {
+      for (i.outer, 0, 64) {
+        for (i.inner.init, 0, 16) {
+          for (j.outer.init, 0, 64) {
+            for (j.inner.init, 0, 16) {
+              compute[((((((((((b.outer*4) + b.inner)*64) + i.outer)*16) + i.inner.init)*64) + j.outer.init)*16) + j.inner.init)] = 0.000000f
+            }
+          }
+        }
+        for (rv.outer, 0, 8) {
+          for (i.inner, 0, 16) {
+            for (j.outer, 0, 64) {
+              for (rv.inner, 0, 4) {
+                for (j.inner, 0, 16) {
+                  compute[((((((((((b.outer*4) + b.inner)*64) + i.outer)*16) + i.inner)*64) + j.outer)*16) + j.inner)] = (compute[((((((((((b.outer*4) + b.inner)*64) + i.outer)*16) + i.inner)*64) + j.outer)*16) + j.inner)] + (A[((((((((((b.outer*4) + b.inner)*64) + i.outer)*16) + i.inner)*8) + rv.outer)*4) + rv.inner)]*B[((((((((((b.outer*4) + b.inner)*8) + rv.outer)*4) + rv.inner)*64) + j.outer)*16) + j.inner)]))
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+scheduling gemm
+10 : time =  115  temp =  817.0728068875467  counter =  12
+20 : time =  148  temp =  667.6079717550942  counter =  23
+30 : time =  518  temp =  545.4843193824369  counter =  31
+40 : time =  62  temp =  445.7004039509507  counter =  48
+50 : time =  65  temp =  364.1696800871167  counter =  63
+60 : time =  534  temp =  297.5531426921204  counter =  87
+70 : time =  142  temp =  243.12258149766154  counter =  98
+80 : time =  545  temp =  198.64885008204067  counter =  114
+90 : time =  42  temp =  162.3105735215164  counter =  131
+100 : time =  125  temp =  132.61955589475298  counter =  156
+110 : time =  58  temp =  108.3598327831057  counter =  174
+120 : time =  45  temp =  88.53787272595741  counter =  204
+130 : time =  106  temp =  72.34188818405036  counter =  226
+140 : time =  66  temp =  59.108589634087096  counter =  238
+150 : time =  63  temp =  48.296021243487694  counter =  271
+160 : time =  56  temp =  39.46136563891707  counter =  307
+170 : time =  46  temp =  32.24280878620576  counter =  333
+180 : time =  46  temp =  26.344722276883594  counter =  361
+190 : time =  45  temp =  21.525556177446163  counter =  397
+200 : time =  35  temp =  17.587946605721505  counter =  429
+210 : time =  50  temp =  14.37063290052517  counter =  466
+220 : time =  45  temp =  11.741853360782626  counter =  500
+230 : time =  43  temp =  9.593949083556632  counter =  545
+240 : time =  64  temp =  7.838954906837825  counter =  600
+250 : time =  38  temp =  6.404996888794889  counter =  633
+260 : time =  36  temp =  5.233348786033643  counter =  708
+270 : time =  37  temp =  4.2760269820260435  counter =  799
+280 : time =  35  temp =  3.4938253685309055  counter =  890
+290 : time =  35  temp =  2.854709700640464  counter =  1002
+300 : time =  32  temp =  2.3325056679514122  counter =  1159
+310 : time =  34  temp =  1.905826953194173  counter =  1279
+320 : time =  33  temp =  1.557199378088304  counter =  1427
+330 : time =  33  temp =  1.2723452667381527  counter =  1573
+340 : time =  34  temp =  1.039598718423827  counter =  1801
+350 : time =  33  temp =  0.8494278428992525  counter =  2157
+360 : time =  32  temp =  0.6940443918461263  counter =  2465
+370 : time =  33  temp =  0.5670847993502747  counter =  3335
+380 : time =  33  temp =  0.46334956874839023  counter =  4221
+390 : time =  32  temp =  0.37859033270738146  counter =  7187
+tried times exceed boundary, breaking
+Tot times tried: 10399
+Time used for SA: 16721.17605161667
+order choosed: [iter_var(b.inner, ), iter_var(i.outer, ), iter_var(rv.outer, ), iter_var(i.inner, ), iter_var(j.outer, ), iter_var(b.outer, ), iter_var(j.inner, ), iter_var(rv.inner, )]
+produce compute {
+  for (b.inner, 0, 4) {
+    for (i.outer, 0, 32) {
+      for (i.inner.init, 0, 16) {
+        for (j.outer.init, 0, 32) {
+          for (j.inner.init, 0, 16) {
+            if (likely((b.inner < 2))) {
+              compute[((((((((b.inner*32) + i.outer)*16) + i.inner.init)*32) + j.outer.init)*16) + j.inner.init)] = 0.000000f
+            }
+          }
+        }
+      }
+      for (rv.outer, 0, 128) {
+        for (i.inner, 0, 16) {
+          for (j.outer, 0, 32) {
+            for (j.inner, 0, 16) {
+              for (rv.inner, 0, 4) {
+                if (likely((b.inner < 2))) {
+                  compute[((((((((b.inner*32) + i.outer)*16) + i.inner)*32) + j.outer)*16) + j.inner)] = (compute[((((((((b.inner*32) + i.outer)*16) + i.inner)*32) + j.outer)*16) + j.inner)] + (A[((((((((b.inner*32) + i.outer)*16) + i.inner)*128) + rv.outer)*4) + rv.inner)]*B[((((((((b.inner*128) + rv.outer)*4) + rv.inner)*32) + j.outer)*16) + j.inner)]))
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+scheduling gemm
+10 : time =  1074  temp =  817.0728068875467  counter =  32
+20 : time =  551  temp =  667.6079717550942  counter =  44
+30 : time =  208  temp =  545.4843193824369  counter =  68
+40 : time =  258  temp =  445.7004039509507  counter =  88
+50 : time =  315  temp =  364.1696800871167  counter =  112
+60 : time =  290  temp =  297.5531426921204  counter =  136
+70 : time =  303  temp =  243.12258149766154  counter =  158
+80 : time =  220  temp =  198.64885008204067  counter =  179
+90 : time =  184  temp =  162.3105735215164  counter =  201
+100 : time =  211  temp =  132.61955589475298  counter =  236
+110 : time =  211  temp =  108.3598327831057  counter =  270
+120 : time =  226  temp =  88.53787272595741  counter =  315
+130 : time =  125  temp =  72.34188818405036  counter =  342
+140 : time =  199  temp =  59.108589634087096  counter =  393
+150 : time =  241  temp =  48.296021243487694  counter =  422
+160 : time =  190  temp =  39.46136563891707  counter =  456
+170 : time =  189  temp =  32.24280878620576  counter =  526
+180 : time =  128  temp =  26.344722276883594  counter =  564
+190 : time =  131  temp =  21.525556177446163  counter =  654
+200 : time =  184  temp =  17.587946605721505  counter =  722
+210 : time =  126  temp =  14.37063290052517  counter =  795
+220 : time =  125  temp =  11.741853360782626  counter =  896
+230 : time =  131  temp =  9.593949083556632  counter =  994
+240 : time =  131  temp =  7.838954906837825  counter =  1136
+250 : time =  144  temp =  6.404996888794889  counter =  1293
+260 : time =  129  temp =  5.233348786033643  counter =  1446
+270 : time =  132  temp =  4.2760269820260435  counter =  1576
+280 : time =  126  temp =  3.4938253685309055  counter =  1723
+290 : time =  128  temp =  2.854709700640464  counter =  1844
+300 : time =  129  temp =  2.3325056679514122  counter =  1961
+310 : time =  128  temp =  1.905826953194173  counter =  2161
+320 : time =  127  temp =  1.557199378088304  counter =  2538
+330 : time =  125  temp =  1.2723452667381527  counter =  2885
+340 : time =  126  temp =  1.039598718423827  counter =  4161
+350 : time =  123  temp =  0.8494278428992525  counter =  4590
+360 : time =  126  temp =  0.6940443918461263  counter =  6271
+370 : time =  127  temp =  0.5670847993502747  counter =  7628
+tried times exceed boundary, breaking
+Tot times tried: 10379
+Time used for SA: 69242.81537795067
+order choosed: [iter_var(i.outer, ), iter_var(rv.outer, ), iter_var(i.inner, ), iter_var(j.outer, ), iter_var(b.inner, ), iter_var(j.inner, ), iter_var(b.outer, ), iter_var(rv.inner, )]
+produce compute {
+  for (i.outer, 0, 64) {
+    for (i.inner.init, 0, 16) {
+      for (j.outer.init, 0, 64) {
+        for (b.inner.init, 0, 4) {
+          for (j.inner.init, 0, 16) {
+            if (likely((b.inner.init < 1))) {
+              compute[((((((((b.inner.init*64) + i.outer)*16) + i.inner.init)*64) + j.outer.init)*16) + j.inner.init)] = 0.000000f
+            }
+          }
+        }
+      }
+    }
+    for (rv.outer, 0, 256) {
+      for (i.inner, 0, 16) {
+        for (j.outer, 0, 64) {
+          for (b.inner, 0, 4) {
+            for (j.inner, 0, 16) {
+              for (rv.inner, 0, 4) {
+                if (likely((b.inner < 1))) {
+                  compute[((((((((b.inner*64) + i.outer)*16) + i.inner)*64) + j.outer)*16) + j.inner)] = (compute[((((((((b.inner*64) + i.outer)*16) + i.inner)*64) + j.outer)*16) + j.inner)] + (A[((((((((b.inner*64) + i.outer)*16) + i.inner)*256) + rv.outer)*4) + rv.inner)]*B[((((((((b.inner*256) + rv.outer)*4) + rv.inner)*64) + j.outer)*16) + j.inner)]))
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+Exceptons occur in shape (4, 112, 14, 14, 224, 112, 3, 3, 0, 1, 1, 2, 1)
+Error occurs when running `auto_schedule`
+name 'soutput' is not defined
+Exceptons occur in shape (8, 384, 27, 27, 64, 384, 1, 1, 1, 1, 0, 1, 1)
+Error occurs when running `auto_schedule`
+name 'soutput' is not defined
+Exceptons occur in shape (1, 1024, 7, 7, 1024, 1024, 3, 3, 0, 1, 1, 1, 1)
+Error occurs when running `auto_schedule`
+name 'soutput' is not defined
+
+#####################################################
+The results:
+
+Time costs of GEMMs
+(8, 1024, 32, 1024): yours: 29.0614525(ms), torch: 10.991954803466797(ms)
+(2, 512, 512, 512): yours: 33.028071(ms), torch: 7.571530342102051(ms)
+(1, 1024, 1024, 1024): yours: 115.3496324(ms), torch: 28.052091598510742(ms)
+
+Time costs of Conv2ds
+(4, 112, 14, 14, 224, 112, 3, 3, 0, 1, 1, 2, 1): yours: Timeout(ms), torch: Not evaluted(ms)
+(8, 384, 27, 27, 64, 384, 1, 1, 1, 1, 0, 1, 1): yours: Timeout(ms), torch: Not evaluted(ms)
+(1, 1024, 7, 7, 1024, 1024, 3, 3, 0, 1, 1, 1, 1): yours: Timeout(ms), torch: Not evaluted(ms)
+
+your scores:
+gemm_(8, 1024, 32, 1024):2.1
+gemm_(2, 512, 512, 512):1.4
+gemm_(1, 1024, 1024, 1024):1.4
+conv2d_(4, 112, 14, 14, 224, 112, 3, 3, 0, 1, 1, 2, 1):0.0
+conv2d_(8, 384, 27, 27, 64, 384, 1, 1, 1, 1, 0, 1, 1):0.0
+conv2d_(1, 1024, 7, 7, 1024, 1024, 3, 3, 0, 1, 1, 1, 1):0.0
+total:4.9
+exceptions: exception raises in 3 cases
+
+all done!
