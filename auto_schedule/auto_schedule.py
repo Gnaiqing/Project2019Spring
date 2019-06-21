@@ -104,7 +104,7 @@ def new_solve(axisList):
     new_list[x2] = axisList[x1]
     return new_list
 
-def get_time(s,bufs,input_tvm,ctx,number=5):
+def get_time(s,bufs,input_tvm,ctx,number=3):
     func = tvm.build(s,bufs)
     evaluator = func.time_evaluator(func.entry_name,ctx,number=number)
     tvm_time = 0
@@ -240,16 +240,22 @@ def schedule_conv2d_reorder(s,bufs):
     start = time.time()
     # using SA algorithm to find best order
     tmp = 1000
-    tmp_min = 0.001
+    tmp_min = 0.1
     alpha = 0.98
     counter = 0
     counter2 = 0
     old_time = get_time(s,bufs,input_tvm,ctx)
+    ans_time = old_time
+    ans_list = old_list
  
     while(tmp > tmp_min):
         new_list = new_solve(old_list)
         soutput.reorder(*new_list)
         new_time = get_time(s,bufs,input_tvm,ctx)
+        if (new_time < ans_time):
+            ans_time = new_time
+            ans_list = new_list
+
         dE = (new_time - old_time)
         j = judge(dE,tmp)
         if j:
@@ -262,19 +268,20 @@ def schedule_conv2d_reorder(s,bufs):
             tmp = tmp * alpha
             counter2 = counter2 + 1
             if (counter2 % 10 == 0):
-                print(counter2,": time = ",new_time," temp = ",tmp)
+                print(counter2,": time = ",new_time," temp = ",tmp," counter = ",counter)
 
         else:
             counter = counter + 1
         
-        if counter > 10000:
+        if counter > 25000:
             print("tried times exceed boundary, breaking")
             break
 
     end = time.time()
     print("Tot times tried:",counter + counter2)
     print("Time used for SA:",end-start)
-    print("order choosed:",old_list)        
+    print("order choosed:",ans_list) 
+    soutput.reorder(*ans_list)       
     return s, bufs
 
 def auto_schedule(func, args):
@@ -310,7 +317,7 @@ def auto_schedule(func, args):
         k, = sC.op.reduce_axis
         xo,yo,xi,yi = sC.tile(x,y,16,16)
         ko,ki = sC.split(k,factor = 4)
-        sC.reorder(xo,b,ko,xi,yo,yi,ki)
+        sC.reorder(b,xo,ko,xi,yo,ki,yi)
         # sC.reorder(b,xo,yo,ko,xi,ki,yi) # used by tutorial
  
         
