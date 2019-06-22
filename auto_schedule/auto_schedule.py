@@ -81,35 +81,109 @@ def deal_gemm(ops, bufs):
     i,j,k = best_tile_size
     s, bufs = schedule_gemm_with(ops, bufs, i, j, k)
     return s, bufs
-      
-def deal_conv(ops, bufs):
-      print("For conv")
-      s = tvm.create_schedule(ops)
-      
-      length = len(s.stages)
-      #s = tvm.create_schedule(ops)
-      #print(s.stages)
-      if(length == 6):
-        A, B, C, D, E, F = s.stages
-      else:
-        A, B, C, D = s.stages
-        
-      #print(B.op.axis)
-      #print(D.op.axis) 
-      
-      bc = B.fuse(B.op.axis[0], B.op.axis[1])
-      B.parallel(bc)
-      
-      bc = D.fuse(D.op.axis[0], D.op.axis[1])
-      D.parallel(bc)
-      
-      if(length == 6):
-        #print(F.op.axis)
-        bc = F.fuse(F.op.axis[0], F.op.axis[1])
-        F.parallel(bc)
 
-      return s, bufs  
-      
+def schedule_conv_with(ops,bufs,config):
+    s = tvm.create_schedule(ops)
+    length = len(s.stages)
+    if (length == 6):
+        sinput,spadded,sweight,soutput,sbias,soutputbias = s.stages
+    else:
+        sinput,spadded,sweight,soutput = s.stages
+
+    bn = config["bn"]
+    bm = config["bm"]
+    bk = config["bk"]
+    order = config["order"]
+
+    b,c,h,w = soutput.op.axis
+    rc,rw,rh = soutput.op.reduce_axis
+    if (order == 1):  # b = 1
+        co,ci = soutput.split(c,factor = bn)
+        rco,rci = soutput.split(rc,factor = bm)
+        soutput.reorder(b,co,ci,rco,h,rci,rw,rh,w)
+        # soutput.unroll(rh)
+        # soutput.vectorize(w)
+        # bc = soutput.fuse(b,co)
+        # soutput.parallel(bc)
+
+    elif (order == 2): # b = 4
+        co,ci = soutput.split(c,factor = bn)
+        rco,rci = soutput.split(rc,factor = bm)
+        ho,wo,hi,wi = soutput.tile(h,w,bk,bk)
+        soutput.reorder(b,ho,co,rco,ci,rh,rci,hi,wi,rw,wo)
+        # soutput.unroll(rw)
+        # bh = soutput.fuse(b,ho)
+        # soutput.parallel(bh)
+
+    elif (order == 3): # b = 8
+        co,ci = soutput.split(c,factor = bn)
+        rco,rci = soutput.split(rc,factor = bm)
+        soutput.reorder(b,rco,co,h,w,ci,rci)
+        # soutput.unroll(rci)
+        # brc = soutput.fuse(b,rco)
+        # soutput.parallel(brc)
+
+    return s,bufs
+                     
+def deal_conv(ops, bufs):
+    print("For conv")
+     
+    best_tile_time = -1
+    best_tile_size = []
+    l = len(bufs) 
+    tensors = []
+    for i in range(l-1):
+        tensors.append(bufs[i])
+    output_tensor = bufs[l-1]
+ 
+
+    ctx = tvm.cpu(0)
+    input_tvm = []
+
+    for tensor in tensors:
+        data = np.random.random(
+            [int(j) for j in tensor.shape]).astype(np.float32) * 100
+        tvm_data = tvm.nd.array(data, ctx)
+        input_tvm.append(tvm_data)
+
+    output_holder = tvm.nd.array(
+        np.zeros([int(j) for j in output_tensor.shape],
+                 dtype=output_tensor.dtype), ctx
+    )
+
+    input_tvm = input_tvm + [output_holder]
+    config = {}
+
+    for i in range(2,8):
+        for j in range(2,8):
+            for k in range(0,4):
+                for order in range(1,4):
+                    config["bn"] = 1<<i
+                    config["bm"] = 1<<j
+                    config["bk"] = 1<<k
+                    config["order"] = order
+                    new_s, new_bufs = schedule_conv_with(ops, bufs, config)
+                    func = tvm.build(new_s, new_bufs)
+                
+                    evaluator = func.time_evaluator(func.entry_name, ctx, number=3)
+                    tvm_time = evaluator(*input_tvm).mean * 1e3
+                
+                    print(str(1<<i)+' '+str(1<<j)+' '+str(1<<k)+' '+str(order))
+                    print(tvm_time)
+                
+                    if (best_tile_time == -1) | (tvm_time < best_tile_time):
+                        best_tile_time = tvm_time
+                        best_tile_size = [1<<i, 1<<j, 1<<k,order]
+
+    i,j,k,order = best_tile_size
+    print("best tile size = ",i,j,k,order)
+    config["bn"] = i
+    config["bm"] = j
+    config["bk"] = k
+    config["order"] = order
+    s, bufs = schedule_conv_with(ops, bufs, config)
+    return s, bufs
+
 def new_solve(axisList):
     new_list = axisList[:]
     size = len(axisList)
@@ -248,12 +322,12 @@ def schedule_conv2d_reorder(s,bufs):
   
     b,o,h,w = soutput.op.axis
     rc,rw,rh = soutput.op.reduce_axis
-    bo,bi  = soutput.split(b,factor = 4)
-    ho,wo,hi,wi = soutput.tile(h,w,4,4)
-    oo,oi = soutput.split(o,factor = 16)
-    rco,rci = soutput.split(rc,factor = 16)
-    soutput.reorder(bo,bi,rco,rci,oo,oi,ho,hi,rh,wo,wi,rw)
-    old_list = [bo,bi,rco,rci,oo,oi,ho,hi,rh,wo,wi,rw]
+    # bo,bi  = soutput.split(b,factor = 4)
+    # ho,wo,hi,wi = soutput.tile(h,w,4,4)
+    oo,oi = soutput.split(o,factor = 4)
+    rco,rci = soutput.split(rc,factor = 4)
+    soutput.reorder(b,rco,rci,oo,oi,h,rh,w,rw)
+    old_list = [b,rco,rci,oo,oi,h,rh,w,rw]
     start = time.time()
     # using SA algorithm to find best order
     tmp = 1000
@@ -290,7 +364,7 @@ def schedule_conv2d_reorder(s,bufs):
         else:
             counter = counter + 1
         
-        if counter > 25000:
+        if counter > 10000:
             print("tried times exceed boundary, breaking")
             break
 
@@ -328,9 +402,14 @@ def auto_schedule(func, args):
     
     if (func.__name__ == 'batch_gemm'):
       #print("  GEMM   !!!!!!!!")
-      s, bufs = deal_gemm(ops, bufs)
+      #s, bufs = deal_gemm(ops,bufs)
+      s, bufs = schedule_gemm_with(ops, bufs,16,16,4)
     else:
-      s, bufs = deal_conv(ops, bufs)
+      s, bufs = deal_conv(ops,bufs)
+      # s, bufs = schedule_conv_with(ops,bufs,4,4)
+      # s = tvm.create_schedule(ops)
+      # s, bufs = schedule_conv2d_reorder(s,bufs)
+      
     
     #################################################
     # perform real schedule according to 
@@ -340,4 +419,5 @@ def auto_schedule(func, args):
     #################################################
     # finally, remember to return these two results
     # we need `bufs` to build function via `tvm.build`
+    print(tvm.lower(s,bufs,simple_mode=True))
     return s, bufs 
