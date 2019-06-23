@@ -79,6 +79,7 @@ def deal_gemm(ops, bufs):
                     best_tile_size = [1<<i, 1<<j, 1<<k]
 
     i,j,k = best_tile_size
+    print("best tile size = ", i,j, k)
     s, bufs = schedule_gemm_with(ops, bufs, i, j, k)
     return s, bufs
 
@@ -101,27 +102,27 @@ def schedule_conv_with(ops,bufs,config):
         co,ci = soutput.split(c,factor = bn)
         rco,rci = soutput.split(rc,factor = bm)
         soutput.reorder(b,co,ci,rco,h,rci,rw,rh,w)
-        # soutput.unroll(rh)
-        # soutput.vectorize(w)
-        # bc = soutput.fuse(b,co)
-        # soutput.parallel(bc)
+        soutput.unroll(rh)
+        soutput.vectorize(w)
+        bc = soutput.fuse(b,co)
+        soutput.parallel(bc)
 
     elif (order == 2): # b = 4
         co,ci = soutput.split(c,factor = bn)
         rco,rci = soutput.split(rc,factor = bm)
         ho,wo,hi,wi = soutput.tile(h,w,bk,bk)
         soutput.reorder(b,ho,co,rco,ci,rh,rci,hi,wi,rw,wo)
-        # soutput.unroll(rw)
-        # bh = soutput.fuse(b,ho)
-        # soutput.parallel(bh)
+        soutput.unroll(rw)
+        bh = soutput.fuse(b,ho)
+        soutput.parallel(bh)
 
     elif (order == 3): # b = 8
         co,ci = soutput.split(c,factor = bn)
         rco,rci = soutput.split(rc,factor = bm)
         soutput.reorder(b,rco,co,h,w,ci,rci)
-        # soutput.unroll(rci)
-        # brc = soutput.fuse(b,rco)
-        # soutput.parallel(brc)
+        soutput.unroll(rci)
+        brc = soutput.fuse(b,rco)
+        soutput.parallel(brc)
 
     return s,bufs
                      
@@ -402,8 +403,8 @@ def auto_schedule(func, args):
     
     if (func.__name__ == 'batch_gemm'):
       #print("  GEMM   !!!!!!!!")
-      #s, bufs = deal_gemm(ops,bufs)
-      s, bufs = schedule_gemm_with(ops, bufs,16,16,4)
+      s, bufs = deal_gemm(ops,bufs)
+      # s, bufs = schedule_gemm_with(ops, bufs,16,16,4)
     else:
       s, bufs = deal_conv(ops,bufs)
       # s, bufs = schedule_conv_with(ops,bufs,4,4)
