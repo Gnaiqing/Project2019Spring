@@ -1,5 +1,12 @@
-import tvm,random,math,time
+import tvm,random,math,time,signal
 import numpy as np
+from math import ceil
+
+def handler1(signum, frame):
+    raise TimeoutError()
+
+def handler2(signum,frame):
+    raise TimeoutError()
 
 def schedule_gemm_with(ops, bufs, bn, rn, bm):
     s = tvm.create_schedule(ops)
@@ -27,7 +34,7 @@ def schedule_gemm_with(ops, bufs, bn, rn, bm):
     return s, bufs
 
 
-def deal_gemm(ops, bufs):
+def deal_gemm(ops, bufs, timeout = 18 * 60):
     print("For gemm")
     bs, ns, ks = bufs[0].shape
     bs, ks, ms = bufs[1].shape
@@ -54,32 +61,44 @@ def deal_gemm(ops, bufs):
 
     input_tvm = input_tvm + [output_holder]
 
-    for i in range(2,8):
-        for j in range(2,8):
-            for k in range(0,4):
-                if (1<<i)>int(ns) :
-                    continue
-                if (1<<j)>int(ks) :
-                    continue
-                if (1<<k)>int(ms) :
-                    continue
+    signal.signal(signal.SIGALRM, handler1)
+    signal.alarm(ceil(timeout))
+    try:
+        for i in range(2,8):
+            for j in range(2,8):
+                for k in range(0,4):
+                    if (1<<i)>int(ns) :
+                        continue
+                    if (1<<j)>int(ks) :
+                        continue
+                    if (1<<k)>int(ms) :
+                        continue
 
-                new_s, new_bufs = schedule_gemm_with(ops, bufs, 1<<i, 1<<j, 1<<k)
+                    new_s, new_bufs = schedule_gemm_with(ops, bufs, 1<<i, 1<<j, 1<<k)
 
-                func = tvm.build(new_s, new_bufs)
+                    func = tvm.build(new_s, new_bufs)
                 
-                evaluator = func.time_evaluator(func.entry_name, ctx, number=10)
-                tvm_time = evaluator(*input_tvm).mean * 1e3
+                    signal.signal(signal.SIGALRM,handler2)
+                    signal.alarm(ceil(best_tile_time*20/1e3))
+                    try:
+                        evaluator = func.time_evaluator(func.entry_name, ctx, number=10)
+                        tvm_time = evaluator(*input_tvm).mean * 1e3                    
+                        print(str(1<<i)+' '+str(1<<j)+' '+str(k))
+                        print(tvm_time)
+                        if (best_tile_time == -1) | (tvm_time < best_tile_time):
+                            best_tile_time = tvm_time
+                            best_tile_size = [1<<i, 1<<j, 1<<k]
+
+                    except TimeoutError:
+                        print(str(1<<i)+' '+str(1<<j)+' '+str(k))
+                        print("skippped")
                 
-                print(str(1<<i)+' '+str(1<<j)+' '+str(k))
-                print(tvm_time)
-                
-                if (best_tile_time == -1) | (tvm_time < best_tile_time):
-                    best_tile_time = tvm_time
-                    best_tile_size = [1<<i, 1<<j, 1<<k]
+    except TimeoutError:
+        print("reaching time limit, using current best size")
 
     i,j,k = best_tile_size
     print("best tile size = ", i,j, k)
+    print("best time = ",best_tile_time)
     s, bufs = schedule_gemm_with(ops, bufs, i, j, k)
     return s, bufs
 
@@ -126,7 +145,7 @@ def schedule_conv_with(ops,bufs,config):
 
     return s,bufs
                      
-def deal_conv(ops, bufs):
+def deal_conv(ops, bufs,timeout = 18 * 60):
     print("For conv")
      
     best_tile_time = -1
@@ -155,29 +174,43 @@ def deal_conv(ops, bufs):
     input_tvm = input_tvm + [output_holder]
     config = {}
 
-    for i in range(2,8):
-        for j in range(2,8):
-            for k in range(0,4):
-                for order in range(1,4):
-                    config["bn"] = 1<<i
-                    config["bm"] = 1<<j
-                    config["bk"] = 1<<k
-                    config["order"] = order
-                    new_s, new_bufs = schedule_conv_with(ops, bufs, config)
-                    func = tvm.build(new_s, new_bufs)
+    signal.signal(signal.SIGALRM, handler1)
+    signal.alarm(ceil(timeout))
+    try:
+        for i in range(2,8):
+            for j in range(2,8):
+                for k in range(0,4):
+                    for order in range(1,4):
+                        config["bn"] = 1<<i
+                        config["bm"] = 1<<j
+                        config["bk"] = 1<<k
+                        config["order"] = order
+                        new_s, new_bufs = schedule_conv_with(ops, bufs, config)
+                        func = tvm.build(new_s, new_bufs)
+
+                        signal.signal(signal.SIGALRM,handler2)
+                        signal.alarm(ceil(best_tile_time*20/1e3))
+
+                        try:                
+                            evaluator = func.time_evaluator(func.entry_name, ctx, number=10)
+                            tvm_time = evaluator(*input_tvm).mean * 1e3
                 
-                    evaluator = func.time_evaluator(func.entry_name, ctx, number=3)
-                    tvm_time = evaluator(*input_tvm).mean * 1e3
+                            print(str(1<<i)+' '+str(1<<j)+' '+str(1<<k)+' '+str(order))
+                            print(tvm_time)
                 
-                    print(str(1<<i)+' '+str(1<<j)+' '+str(1<<k)+' '+str(order))
-                    print(tvm_time)
-                
-                    if (best_tile_time == -1) | (tvm_time < best_tile_time):
-                        best_tile_time = tvm_time
-                        best_tile_size = [1<<i, 1<<j, 1<<k,order]
+                            if (best_tile_time == -1) | (tvm_time < best_tile_time):
+                                best_tile_time = tvm_time
+                                best_tile_size = [1<<i, 1<<j, 1<<k,order]
+                        except TimeoutError:
+                            print(str(1<<i)+' ' + str(1<<j)+' '+str(1<<k)+' '+str(order))
+                            print("skipped")
+
+    except TimeoutError:
+        print("reaching time limit, using current best size")
 
     i,j,k,order = best_tile_size
     print("best tile size = ",i,j,k,order)
+    print("best time = ",best_tile_time)
     config["bn"] = i
     config["bm"] = j
     config["bk"] = k
@@ -403,14 +436,18 @@ def auto_schedule(func, args):
     
     if (func.__name__ == 'batch_gemm'):
       #print("  GEMM   !!!!!!!!")
-      s, bufs = deal_gemm(ops,bufs)
+      s, bufs = deal_gemm(ops,bufs,60)
       # s, bufs = schedule_gemm_with(ops, bufs,16,16,4)
     else:
-      s, bufs = deal_conv(ops,bufs)
-      # s, bufs = schedule_conv_with(ops,bufs,4,4)
-      # s = tvm.create_schedule(ops)
-      # s, bufs = schedule_conv2d_reorder(s,bufs)
-      
+      s, bufs = deal_conv(ops,bufs,60)
+      '''
+      config = {}
+      config["bn"] = 4
+      config["bm"] = 4
+      config["bk"] = 1
+      config["order"] = 1
+      s, bufs = schedule_conv_with(ops,bufs,config)
+      '''
     
     #################################################
     # perform real schedule according to 
