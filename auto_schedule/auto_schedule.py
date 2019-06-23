@@ -68,9 +68,9 @@ def deal_gemm(ops, bufs, timeout = 10 * 60):
     input_tvm = input_tvm + [output_holder]
 
 
-    # signal.signal(signal.SIGALRM, handler1)
-    # signal.alarm(ceil(timeout))
-    signal.signal(signal.SIGALRM,handler2)
+    signal.signal(signal.SIGALRM, handler1)
+    signal.alarm(ceil(timeout))
+    # signal.signal(signal.SIGALRM,handler2)
     tot_time = 0
     try:
         for i in range(2,6):
@@ -89,7 +89,7 @@ def deal_gemm(ops, bufs, timeout = 10 * 60):
                     
                     limit_time = ceil(best_tile_time*20/1e3)
                     try:
-                        signal.alarm(limit_time)
+                        # signal.alarm(limit_time)
                         evaluator = func.time_evaluator(func.entry_name, ctx, number=10)
                         tvm_time = evaluator(*input_tvm).mean * 1e3               
                         print(str(1<<i)+' '+str(1<<j)+' '+str(k))
@@ -98,15 +98,15 @@ def deal_gemm(ops, bufs, timeout = 10 * 60):
                             best_tile_time = tvm_time
                             best_tile_size = [1<<i, 1<<j, 1<<k]
 
-                        rem_time = signal.alarm(0)
-                        tot_time = tot_time + limit_time - rem_time + 1
+                        # rem_time = signal.alarm(0)
+                        # tot_time = tot_time + limit_time - rem_time + 1
 
                     except TO2Error:
-                        tot_time = tot_time + limit_time + 1
+                        # tot_time = tot_time + limit_time + 1
                         print(str(1<<i)+' '+str(1<<j)+' '+str(k))
                         print("skippped")
     
-                    print("tot_time: ",str(tot_time))
+                    # print("tot_time: ",str(tot_time))
                     if tot_time > timeout:
                         raise TO1Error()    
                 
@@ -193,9 +193,9 @@ def deal_conv(ops, bufs,timeout = 18 * 60):
     input_tvm = input_tvm + [output_holder]
     config = {}
 
-    # signal.signal(signal.SIGALRM, handler1)
-    # signal.alarm(ceil(timeout))
-    signal.signal(signal.SIGALRM,handler2)
+    signal.signal(signal.SIGALRM, handler1)
+    signal.alarm(ceil(timeout))
+    # signal.signal(signal.SIGALRM,handler2)
     tot_time = 0
     try:
         for i in range(2,6):
@@ -210,7 +210,7 @@ def deal_conv(ops, bufs,timeout = 18 * 60):
                         limit_time = ceil(best_tile_time*20/1e3)
 
                         try:                
-                            signal.alarm(limit_time)
+                            # signal.alarm(limit_time)
                             new_s, new_bufs = schedule_conv_with(ops, bufs, config)
                             func = tvm.build(new_s, new_bufs)
 
@@ -224,15 +224,15 @@ def deal_conv(ops, bufs,timeout = 18 * 60):
                                 best_tile_time = tvm_time
                                 best_tile_size = [1<<i, 1<<j, 1<<k,order]
 
-                            rem_time = signal.alarm(0)
-                            tot_time = tot_time + limit_time - rem_time + 1
+                            # rem_time = signal.alarm(0)
+                            # tot_time = tot_time + limit_time - rem_time + 1
 
                         except TO2Error:
-                            tot_time = tot_time + limit_time + 1
+                            # tot_time = tot_time + limit_time + 1
                             print(str(1<<i)+' ' + str(1<<j)+' '+str(1<<k)+' '+str(order))
                             print("skipped")
 
-                        print("tot_time: ",str(tot_time))
+                        # print("tot_time: ",str(tot_time))
                         if tot_time > timeout:
                             raise TO1Error()    
 
@@ -462,9 +462,9 @@ def auto_schedule(func, args):
     # to analyze which schedule is appropriate
     
     if (func.__name__ == 'batch_gemm'):
-      s, bufs = deal_gemm(ops,bufs, 600)
+      s, bufs = deal_gemm(ops,bufs, 15 * 60)
     else:
-      s, bufs = deal_conv(ops,bufs, 600)
+      s, bufs = deal_conv(ops,bufs, 15 * 60)
     
     #################################################
     # perform real schedule according to 
