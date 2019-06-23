@@ -1,12 +1,18 @@
-import tvm,random,math,time,signal
+import tvm,random,math,time,signal,threading
 import numpy as np
 from math import ceil
 
-def handler1(signum, frame):
-    raise TimeoutError()
+class TO1Error(Exception):
+    pass
+
+class TO2Error(Exception):
+    pass
+ 
+def handler1():
+    raise TO1Error() 
 
 def handler2(signum,frame):
-    raise TimeoutError()
+    raise TO2Error()
 
 def schedule_gemm_with(ops, bufs, bn, rn, bm):
     s = tvm.create_schedule(ops)
@@ -61,11 +67,12 @@ def deal_gemm(ops, bufs, timeout = 18 * 60):
 
     input_tvm = input_tvm + [output_holder]
 
-    signal.signal(signal.SIGALRM, handler1)
-    signal.alarm(ceil(timeout))
+
     try:
-        for i in range(2,8):
-            for j in range(2,8):
+        signal.signal(signal.SIGALRM,handler2)
+
+        for i in range(2,6):
+            for j in range(2,6):
                 for k in range(0,4):
                     if (1<<i)>int(ns) :
                         continue
@@ -78,21 +85,22 @@ def deal_gemm(ops, bufs, timeout = 18 * 60):
 
                     func = tvm.build(new_s, new_bufs)
                 
-                    signal.signal(signal.SIGALRM,handler2)
                     signal.alarm(ceil(best_tile_time*20/1e3))
                     try:
                         evaluator = func.time_evaluator(func.entry_name, ctx, number=10)
-                        tvm_time = evaluator(*input_tvm).mean * 1e3                    
+                        tvm_time = evaluator(*input_tvm).mean * 1e3               
+                        signal.alarm(0)     
                         print(str(1<<i)+' '+str(1<<j)+' '+str(k))
                         print(tvm_time)
                         if (best_tile_time == -1) | (tvm_time < best_tile_time):
                             best_tile_time = tvm_time
                             best_tile_size = [1<<i, 1<<j, 1<<k]
 
-                    except TimeoutError:
+                    except TO2Error:
                         print(str(1<<i)+' '+str(1<<j)+' '+str(k))
                         print("skippped")
                 
+
     except TimeoutError:
         print("reaching time limit, using current best size")
 
@@ -174,11 +182,12 @@ def deal_conv(ops, bufs,timeout = 18 * 60):
     input_tvm = input_tvm + [output_holder]
     config = {}
 
-    signal.signal(signal.SIGALRM, handler1)
-    signal.alarm(ceil(timeout))
+    # signal.signal(signal.SIGALRM, handler1)
+    # signal.alarm(ceil(timeout))
+    signal.signal(signal.SIGALRM,handler2)
     try:
-        for i in range(2,8):
-            for j in range(2,8):
+        for i in range(2,6):
+            for j in range(2,6):
                 for k in range(0,4):
                     for order in range(1,4):
                         config["bn"] = 1<<i
@@ -188,12 +197,12 @@ def deal_conv(ops, bufs,timeout = 18 * 60):
                         new_s, new_bufs = schedule_conv_with(ops, bufs, config)
                         func = tvm.build(new_s, new_bufs)
 
-                        signal.signal(signal.SIGALRM,handler2)
                         signal.alarm(ceil(best_tile_time*20/1e3))
 
                         try:                
                             evaluator = func.time_evaluator(func.entry_name, ctx, number=10)
                             tvm_time = evaluator(*input_tvm).mean * 1e3
+                            signal.alarm(0)
                 
                             print(str(1<<i)+' '+str(1<<j)+' '+str(1<<k)+' '+str(order))
                             print(tvm_time)
@@ -201,7 +210,7 @@ def deal_conv(ops, bufs,timeout = 18 * 60):
                             if (best_tile_time == -1) | (tvm_time < best_tile_time):
                                 best_tile_time = tvm_time
                                 best_tile_size = [1<<i, 1<<j, 1<<k,order]
-                        except TimeoutError:
+                        except TO2Error:
                             print(str(1<<i)+' ' + str(1<<j)+' '+str(1<<k)+' '+str(order))
                             print("skipped")
 
@@ -436,10 +445,10 @@ def auto_schedule(func, args):
     
     if (func.__name__ == 'batch_gemm'):
       #print("  GEMM   !!!!!!!!")
-      s, bufs = deal_gemm(ops,bufs,60)
+      s, bufs = deal_gemm(ops,bufs, 18 * 60)
       # s, bufs = schedule_gemm_with(ops, bufs,16,16,4)
     else:
-      s, bufs = deal_conv(ops,bufs,60)
+      s, bufs = deal_conv(ops,bufs,18 * 60)
       '''
       config = {}
       config["bn"] = 4
